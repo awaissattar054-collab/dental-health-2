@@ -1,43 +1,89 @@
-import { Calendar, ShieldCheck, DollarSign, Users, AlertTriangle, TrendingUp, ArrowUpRight, Clock, MoreHorizontal } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useState } from 'react';
+import { 
+  Calendar, 
+  ShieldCheck, 
+  DollarSign, 
+  Users, 
+  AlertTriangle, 
+  TrendingUp, 
+  ArrowUpRight, 
+  Clock, 
+  MoreHorizontal, 
+  Plus, 
+  X,
+  Search,
+  CheckCircle2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../../lib/utils';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { useStore } from '../../lib/store';
+import toast from 'react-hot-toast';
 
 const revenueData = [
-  { name: 'Mon', revenue: 4000, newPatients: 12 },
-  { name: 'Tue', revenue: 5200, newPatients: 15 },
-  { name: 'Wed', revenue: 3800, newPatients: 10 },
-  { name: 'Thu', revenue: 6100, newPatients: 22 },
-  { name: 'Fri', revenue: 4900, newPatients: 18 },
-  { name: 'Sat', revenue: 2500, newPatients: 8 },
+  { name: 'Mon', revenue: 4000 },
+  { name: 'Tue', revenue: 5200 },
+  { name: 'Wed', revenue: 3800 },
+  { name: 'Thu', revenue: 6100 },
+  { name: 'Fri', revenue: 4900 },
+  { name: 'Sat', revenue: 2500 },
 ];
 
 export default function Dashboard() {
+  const { patients, addPatient, searchQuery } = useStore();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Modal Form State
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    urgency: 'routine' as const,
+    status: 'pending' as const,
+  });
+
+  const filteredPatients = patients.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    addPatient(formData);
+    toast.success('Patient record added successfully!');
+    setIsModalOpen(false);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      urgency: 'routine',
+      status: 'pending',
+    });
+  };
+
   return (
     <div className="p-8 space-y-8 max-w-[1600px] mx-auto">
-      {/* Header with High-Precision Stats */}
-      <div className="flex flex-col md:row justify-between items-start md:items-center gap-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-4xl font-black tracking-tight tracking-tighter uppercase gradient-text">Practice Intel</h1>
-          <p className="text-secondary font-medium tracking-tight mt-1 truncate">Dr. Sterling • Clinical Performance Dashboard</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase gradient-text">Practice Intel</h1>
+          <p className="text-secondary font-medium tracking-tight mt-1">Dr. Sterling • Clinical Performance Dashboard</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex -space-x-3 overflow-hidden">
-            {[1, 2, 3, 4].map(i => (
-              <img 
-                key={i}
-                className="inline-block h-8 w-8 rounded-full ring-2 ring-background bg-slate-800"
-                src={`https://picsum.photos/seed/${i + 20}/32/32`}
-                alt="Support Staff"
-              />
-            ))}
-            <div className="flex items-center justify-center h-8 w-8 rounded-full ring-2 ring-background bg-accent text-[10px] font-bold text-white uppercase">
-              +2
-            </div>
-          </div>
-          <button className="btn-primary">
-            <Clock className="w-4 h-4" />
-            Set Availability
+          <button 
+            onClick={() => {
+              setIsModalOpen(true);
+              toast('Opening patient intake form', { icon: '📝' });
+            }}
+            className="btn-primary"
+          >
+            <Plus className="w-4 h-4" />
+            Add Patient
           </button>
         </div>
       </div>
@@ -46,7 +92,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: 'Revenue (MTD)', value: '$54,200', trend: '+12.5%', sub: 'vs last month', icon: DollarSign, color: 'text-accent' },
-          { label: 'Active Patients', value: '1,284', trend: '+4%', sub: 'New +12 this week', icon: Users, color: 'text-safe' },
+          { label: 'Active Patients', value: patients.length.toString(), trend: '+4%', sub: 'Real-time count', icon: Users, color: 'text-safe' },
           { label: 'Avg Case Value', value: '$2,850', trend: '+8.2%', sub: 'Optimized by AI', icon: TrendingUp, color: 'text-blue-400' },
           { label: 'Wait Time', value: '8.5m', trend: '-15%', sub: 'Improved throughput', icon: Clock, color: 'text-purple-400' },
         ].map((stat, i) => (
@@ -76,117 +122,228 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Main Analysis Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Revenue Analytics Chart */}
-        <div className="lg:col-span-12 xl:col-span-8 glass-card p-8">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+        {/* Patient Table */}
+        <div className="xl:col-span-8 glass-card overflow-hidden">
+          <div className="p-8 border-b border-white/5 flex justify-between items-center">
             <div>
-              <h2 className="card-title">Revenue & Patient Trends</h2>
-              <p className="text-xs text-secondary mt-1">Daily clinical output across all practitioners</p>
+              <h2 className="card-title mb-0">Patient Registry</h2>
+              <p className="text-xs text-secondary mt-1">
+                {searchQuery ? `Searching: "${searchQuery}"` : 'Manage your practice directory'}
+              </p>
             </div>
-            <div className="flex gap-2 p-1 bg-background border border-white/5 rounded-xl">
-              <button className="px-3 py-1.5 text-[10px] font-black uppercase rounded-lg bg-accent text-white">Daily</button>
-              <button className="px-3 py-1.5 text-[10px] font-black uppercase rounded-lg text-secondary hover:text-white">Monthly</button>
-            </div>
+            <span className="text-[10px] font-black text-accent bg-accent/10 px-2 py-1 rounded-lg">
+              {filteredPatients.length} RECORDS
+            </span>
           </div>
           
-          <div className="h-[350px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }}
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#64748B', fontSize: 10, fontWeight: 700 }}
-                  tickFormatter={(val) => `$${val/1000}k`}
-                />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1E293B', border: '1px solid #334155', borderRadius: '12px', fontSize: '12px' }}
-                  itemStyle={{ color: '#F1F5F9' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="var(--color-accent)" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorRevenue)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/5 text-[10px] font-black text-secondary uppercase tracking-widest">
+                  <th className="px-8 py-4">Patient Name</th>
+                  <th className="px-8 py-4">Status</th>
+                  <th className="px-8 py-4">Urgency</th>
+                  <th className="px-8 py-4">Phone</th>
+                  <th className="px-8 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                <AnimatePresence>
+                  {filteredPatients.map((patient) => (
+                    <motion.tr 
+                      key={patient.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="group hover:bg-white/5 transition-colors"
+                    >
+                      <td className="px-8 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-xs">
+                            {patient.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold">{patient.name}</p>
+                            <p className="text-[10px] text-secondary">{patient.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-4">
+                        <span className={cn(
+                          "text-[10px] font-black uppercase px-2 py-1 rounded-lg",
+                          patient.status === 'completed' ? "bg-safe/10 text-safe" : "bg-accent/10 text-accent"
+                        )}>
+                          {patient.status}
+                        </span>
+                      </td>
+                      <td className="px-8 py-4">
+                        <span className={cn(
+                          "text-[11px] font-bold",
+                          patient.urgency === 'urgent' ? "text-urgent" : "text-secondary"
+                        )}>
+                          {patient.urgency === 'urgent' ? 'High' : 'Normal'}
+                        </span>
+                      </td>
+                      <td className="px-8 py-4 text-sm font-medium text-secondary">
+                        {patient.phone}
+                      </td>
+                      <td className="px-8 py-4 text-right">
+                        <button className="p-2 text-secondary hover:text-white transition-colors">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+                {filteredPatients.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-8 py-20 text-center text-secondary">
+                      <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                      <p className="font-bold">No patients found matching your search</p>
+                      <p className="text-sm">Try adjusting your filters or add a new record.</p>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Action Center / Smart Tasks */}
-        <div className="lg:col-span-12 xl:col-span-4 glass-card p-8 bg-gradient-to-br from-card to-background">
-          <h2 className="card-title">Priority Appointments</h2>
-          <div className="space-y-4">
-            {[
-              { name: 'Sarah Jenkins', type: 'Root Canal', time: '09:00 AM', status: 'Confirmed', icon: Clock, color: 'text-accent' },
-              { name: 'Marcus Aurelius', type: 'Extraction', time: '10:30 AM', status: 'Urgent', icon: AlertTriangle, color: 'text-urgent' },
-              { name: 'Alice Freeman', type: 'Hygiene', time: '11:45 AM', status: 'Arrived', icon: ShieldCheck, color: 'text-safe' },
-              { name: 'Derek Shepherd', type: 'Consult', time: '02:00 PM', status: 'Pending', icon: Users, color: 'text-amber-400' },
-            ].map((appt, i) => (
-              <div key={i} className="flex items-center gap-4 p-4 rounded-xl hover:bg-white/5 transition-all group border border-transparent hover:border-white/5">
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center bg-background border border-white/5", appt.color)}>
-                  <appt.icon className="w-5 h-5" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-bold truncate">{appt.name}</p>
-                    <span className="text-[10px] font-black text-secondary">{appt.time}</span>
-                  </div>
-                  <p className="text-[10px] text-secondary/60 font-bold uppercase tracking-widest mt-0.5">{appt.type}</p>
-                </div>
-                <button className="p-2 text-secondary hover:text-white">
-                  <MoreHorizontal className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
+        {/* Sidebar Widgets */}
+        <div className="xl:col-span-4 space-y-8">
+          <div className="glass-card p-8">
+            <h2 className="card-title">Analytics</h2>
+            <div className="h-[200px] mt-6">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="var(--color-accent)" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="var(--color-accent)" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area type="monotone" dataKey="revenue" stroke="var(--color-accent)" fillOpacity={1} fill="url(#colorRev)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
           
-          <div className="mt-10 pt-10 border-t border-white/5">
-            <h4 className="text-[10px] font-black text-secondary uppercase tracking-widest mb-6">Staff Performance</h4>
-            <div className="space-y-4">
-              {[
-                { name: 'Dr. STERLING', score: 98, role: 'Lead Dentist' },
-                { name: 'M. SCOTT', score: 82, role: 'Dental Assistant' },
-              ].map((staff, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between items-end">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-bold">{staff.name}</span>
-                      <span className="text-[10px] text-secondary font-medium tracking-tight uppercase">{staff.role}</span>
-                    </div>
-                    <span className="text-xs font-black text-accent">{staff.score}%</span>
-                  </div>
-                  <div className="h-1 w-full bg-background rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${staff.score}%` }}
-                      className="h-full bg-accent"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="glass-card p-8 bg-accent/5 border-accent/20">
+            <h3 className="text-accent font-black uppercase text-[10px] tracking-widest mb-4">Quick Insights</h3>
+            <p className="text-sm leading-relaxed font-medium">
+              You have <span className="text-accent">4 new patients</span> joining this week. 
+              Efficiency is up <span className="text-safe">12%</span> today due to automated reminders.
+            </p>
+            <button 
+              onClick={() => toast.success('Insight report generated!')}
+              className="mt-6 w-full py-2 rounded-xl bg-accent text-white font-bold text-xs transition-transform active:scale-95"
+            >
+              Generate AI Report
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Add Patient Modal */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsModalOpen(false)}
+              className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="glass-card w-full max-w-md relative z-10 overflow-hidden"
+            >
+              <div className="p-8 border-b border-white/5 flex justify-between items-center bg-card">
+                <h2 className="text-xl font-black tracking-tighter uppercase">New Patient Intake</h2>
+                <button 
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-2 hover:bg-white/5 rounded-lg text-secondary hove:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="p-8 space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1 block">Full Name</label>
+                    <input 
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      className="w-full bg-background border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent/50 transition-colors"
+                      placeholder="e.g. John Doe"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1 block">Phone</label>
+                      <input 
+                        type="tel"
+                        required
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        className="w-full bg-background border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent/50 transition-colors"
+                        placeholder="(555) 000-0000"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1 block">Urgency</label>
+                      <select 
+                        value={formData.urgency}
+                        onChange={(e) => setFormData({...formData, urgency: e.target.value as any})}
+                        className="w-full bg-background border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent/50 transition-colors"
+                      >
+                        <option value="routine">Routine</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="emergency">Emergency</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-secondary uppercase tracking-widest mb-1 block">Email Address</label>
+                    <input 
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      className="w-full bg-background border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent/50 transition-colors"
+                      placeholder="patient@example.com"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4 flex gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-3 rounded-xl border border-white/10 font-bold text-sm hover:bg-white/5 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="flex-1 py-3 rounded-xl bg-accent text-white font-bold text-sm hover:bg-accent-hover transition-colors shadow-lg shadow-accent/20"
+                  >
+                    Save Record
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

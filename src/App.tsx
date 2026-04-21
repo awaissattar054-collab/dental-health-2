@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Toaster } from 'react-hot-toast';
+import { useStore } from './lib/store';
 import { 
   Calendar, 
   ShieldCheck, 
@@ -10,7 +12,10 @@ import {
   Search,
   UserCircle,
   ShieldAlert,
-  Loader2
+  Loader2,
+  Presentation,
+  Brain,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from './lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,11 +30,11 @@ import PatientTriage from './components/modules/PatientTriage';
 import ClinicalBrain from './components/modules/ClinicalBrain';
 import ClinicGrowth from './components/modules/ClinicGrowth';
 import LandingPage from './components/LandingPage';
-import { Brain, TrendingUp, Presentation } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('marketing');
   const [isBooting, setIsBooting] = useState(true);
+  const { searchQuery, setSearchQuery } = useStore();
 
   useEffect(() => {
     // Simulate system initialization check
@@ -80,6 +85,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
+      <Toaster position="top-right" />
       <div className="flex min-h-screen bg-background text-primary">
       {/* Sidebar - Don't show on marketing page for "clean" look or show minimized */}
       <aside className={cn(
@@ -138,6 +144,8 @@ export default function App() {
                 <input 
                   type="text" 
                   placeholder="Global search (CMD+K)..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="bg-transparent border-none text-sm focus:outline-none w-full text-primary placeholder:text-secondary/50"
                 />
               </div>
