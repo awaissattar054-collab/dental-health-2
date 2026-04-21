@@ -1,0 +1,110 @@
+{
+  "entities": {
+    "Clinic": {
+      "title": "Clinic Information",
+      "description": "Root configuration for a dental clinic.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "address": { "type": "string" },
+        "timezone": { "type": "string", "description": "IANA timezone string (e.g. America/New_York)" },
+        "subscriptionPlan": { "type": "string", "enum": ["Basic", "Pro", "Enterprise"] }
+      },
+      "required": ["name", "timezone"]
+    },
+    "Doctor": {
+      "title": "Provider Details",
+      "description": "Information about dental professionals within a clinic.",
+      "type": "object",
+      "properties": {
+        "clinicId": { "type": "string" },
+        "name": { "type": "string" },
+        "specialization": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["Admin", "Staff", "Dentist"] }
+      },
+      "required": ["clinicId", "name", "role"]
+    },
+    "Patient": {
+      "title": "Patient Record",
+      "description": "Comprehensive patient data.",
+      "type": "object",
+      "properties": {
+        "clinicId": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "email": { "type": "string", "format": "email" }
+      },
+      "required": ["clinicId", "firstName", "lastName", "phoneNumber"]
+    },
+    "Appointment": {
+      "title": "Appointment Scheduling",
+      "description": "Linked record for a dental visit.",
+      "type": "object",
+      "properties": {
+        "clinicId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "endTime": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["Scheduled", "Confirmed", "Cancelled", "Completed"] },
+        "type": { "type": "string", "description": "Cleaning, Check-up, etc." }
+      },
+      "required": ["clinicId", "doctorId", "patientId", "startTime", "status"]
+    },
+    "Prescription": {
+      "title": "Medication History",
+      "description": "Issued medicines during or after an appointment.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string" },
+        "doctorId": { "type": "string" },
+        "appointmentId": { "type": "string" },
+        "medications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "dosage": { "type": "string" },
+              "frequency": { "type": "string" },
+              "duration": { "type": "string" }
+            }
+          }
+        },
+        "issuedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Invoice": {
+      "title": "Billing Record",
+      "description": "Financial records for dental procedures.",
+      "type": "object",
+      "properties": {
+        "clinicId": { "type": "string" },
+        "patientId": { "type": "string" },
+        "appointmentId": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Paid", "Pending", "Overdue"] },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "description": { "type": "string" },
+              "amount": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/clinics/{clinicId}": { "schema": "Clinic", "description": "Clinic settings" },
+    "/clinics/{clinicId}/doctors/{doctorId}": { "schema": "Doctor", "description": "Multi-doctor support per clinic" },
+    "/clinics/{clinicId}/patients/{patientId}": { "schema": "Patient", "description": "Patient directory" },
+    "/clinics/{clinicId}/appointments/{appointmentId}": { "schema": "Appointment", "description": "Calendar records" },
+    "/clinics/{clinicId}/prescriptions/{prescriptionId}": { "schema": "Prescription", "description": "Clinical pharmacy records" },
+    "/clinics/{clinicId}/invoices/{invoiceId}": { "schema": "Invoice", "description": "Billing module" }
+  }
+}

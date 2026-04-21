@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  /* Medical Grade Precision Palette */
+  --color-primary: #F1F5F9;
+  --color-secondary: #94A3B8;
+  --color-accent: #0EA5E9; /* Trust Blue */
+  --color-accent-hover: #0284C7;
+  --color-background: #0F172A; /* Slate 900 */
+  --color-card: #1E293B; /* Slate 800 */
+  --color-border: #334155; /* Slate 700 */
+  --color-urgent: #F43F5E; /* Rose 500 */
+  --color-safe: #10B981; /* Emerald 500 */
+  
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-primary font-sans antialiased selection:bg-accent/30 selection:text-white;
+  }
+}
+
+.glass-card {
+  @apply bg-card/50 backdrop-blur-xl border border-white/5 transition-all duration-500 rounded-2xl hover:bg-card/80 hover:border-accent/30 shadow-2xl shadow-black/20;
+}
+
+.card-title {
+  @apply text-[11px] uppercase tracking-[0.15em] font-black text-secondary flex items-center gap-3 mb-4;
+}
+
+.card-title::before {
+  content: '';
+  @apply w-1 h-3 bg-accent rounded-full;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-br from-white to-secondary font-bold;
+}
+
+.btn-primary {
+  @apply bg-accent hover:bg-accent-hover text-white px-4 py-2 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2;
+}
+
+/* Custom scrollbar for medical dark theme */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border/20 rounded-full hover:bg-border/50;
+}

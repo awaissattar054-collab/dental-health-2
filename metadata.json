@@ -1,0 +1,14 @@
+{
+  "name": "DentalOS AI",
+  "description": "High-ticket AI Automation System for Dental Clinics featuring an AI Receptionist, Insurance Verification, Treatment Cost Estimator, and Patient Triage.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "AI Appointment Scheduling",
+    "OCR Insurance Verification",
+    "CDT Cost Estimation",
+    "Patient Lead Triage"
+  ]
+}
