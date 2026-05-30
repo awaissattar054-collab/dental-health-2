@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-// @ts-expect-error AnimatePresence is exported from motion/react
+// @ts-ignore AnimatePresence is exported from motion/react
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader2, Calendar, User, Building2, Mail, Phone, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
